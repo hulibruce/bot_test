@@ -1,4 +1,4 @@
-name: Comment Bot for new users
+name: Comment Bot for Issues
 
 on:
   issues:
@@ -11,49 +11,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: 获取所有历史用户
-      - name: Get all historical users
-        id: get-users
+      # Step 1: 检查触发用户是否为新用户（可选）
+      - name: Check if user is new
+        id: check-user
         uses: actions/github-script@v6
         with:
           script: |
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
+            const user = context.payload.issue?.user?.login || context.payload.comment?.user?.login;
+            const issueNumber = context.payload.issue?.number;
+            const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'all'
+              issue_number: issueNumber,
             });
 
-            const users = new Set();
-            for (const issue of issues) {
-              users.add(issue.user.login); // 添加 Issue 作者
-              const comments = await github.rest.issues.listComments({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issue.number
-              });
-              for (const comment of comments.data) {
-                users.add(comment.user.login); // 添加评论用户
-              }
+            const hasResponded = comments.data.some(comment => comment.user.login === user);
+            if (hasResponded) {
+              return "respond";
+            } else {
+              return "respond";
             }
 
-            return Array.from(users);
-
-      # Step 2: 判断是否为新用户
-      - name: Check if user is new
-        id: check-user
-        run: |
-          USER="${{ github.event.comment.user.login || github.event.issue.user.login }}"
-          if echo "${{ steps.get-users.outputs.result }}" | grep -q "$USER"; then
-            echo "User $USER is not new."
-            echo "send_response=true" >> $GITHUB_ENV
-          else
-            echo "User $USER is new."
-            echo "send_response=true" >> $GITHUB_ENV
-          fi
-
-      # Step 3: 对新用户发送评论
+      # Step 2: 回复新用户
       - name: Respond to new user
-        if: env.send_response == 'true'
+        if: steps.check-user.outputs.result == 'respond'
         uses: peter-evans/create-or-update-comment@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,3 +43,4 @@ jobs:
             欢迎来到本项目！😊
 
             请扫码加入我们的答疑群以获取更多帮助：
+           
