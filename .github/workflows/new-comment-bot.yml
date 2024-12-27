@@ -25,15 +25,11 @@ jobs:
               issue_number: issueNumber,
             });
 
-            // 检查是否已回复该用户（此处改为始终返回 "respond" 测试所有用户）
+            // 检查是否已回复该用户（始终返回 "respond" 作为测试）
             const hasResponded = comments.data.some(comment => comment.user.login === user);
             console.log(`Current user: ${user}`);
             console.log(`Comments by user: ${hasResponded}`);
             core.setOutput("result", "respond");
-
-      # Step 2: 调试输出检测结果
-      - name: Debug Check Result
-        run: echo "Check Result: ${{ steps.check-user.outputs.result }}"
 
       # Step 3: 回复用户
       - name: Respond to new user
@@ -46,4 +42,3 @@ jobs:
             欢迎来到本项目！😊
 
             请扫码加入我们的答疑群以获取更多帮助：
-  
