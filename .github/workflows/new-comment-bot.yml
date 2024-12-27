@@ -11,39 +11,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: 检查用户是否需要回复
-      - name: Check if user is new
-        id: check-user
+      # 检查用户是否需要回复，并直接回复
+      - name: Check user and respond
         uses: actions/github-script@v6
         with:
           script: |
             const user = context.payload.issue?.user?.login || context.payload.comment?.user?.login;
             const issueNumber = context.payload.issue?.number;
+
+            // 获取当前 Issue 的所有评论
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
             });
 
-            // 检查是否已经回复过该用户
+            // 检查是否已回复当前用户
             const hasResponded = comments.data.some(comment => comment.user.login === user);
             console.log(`Current user: ${user}`);
-            console.log(`Comments by user: ${hasResponded}`);
-            core.setOutput("result", hasResponded ? "respond" : "respond");
+            console.log(`Has responded: ${hasResponded}`);
 
-      # Step 2: 调试输出检测结果
-      - name: Debug Check Result
-        run: |
-          echo "Check Result: ${{ steps.check-user.outputs.result }}"
+            if (true) {
+              // 如果尚未回复，则添加评论
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `
+                  欢迎来到本项目！😊
 
-      # Step 3: 回复用户
-      - name: Respond to new user
-        if: steps.check-user.outputs.result == 'respond'
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
-          body: |
-            欢迎来到本项目！😊
-
-            请扫码加入我们的答疑群以获取更多帮助：
+                  请扫码加入我们的答疑群以获取更多帮助：
+                  ![答疑群二维码](https://your-image-hosting.com/qr-code.png)
+                `
+              });
+              console.log("Comment added for new user.");
+            } else {
+              console.log("User already responded, skipping comment.");
+            }
