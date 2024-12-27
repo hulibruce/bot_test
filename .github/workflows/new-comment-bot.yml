@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: 检查触发用户是否为新用户（可选）
+      # Step 1: 检查用户是否需要回复
       - name: Check if user is new
         id: check-user
         uses: actions/github-script@v6
@@ -25,14 +25,17 @@ jobs:
               issue_number: issueNumber,
             });
 
+            // 检查是否已回复该用户（此处改为始终返回 "respond" 测试所有用户）
             const hasResponded = comments.data.some(comment => comment.user.login === user);
-            if (hasResponded) {
-              return "respond";
-            } else {
-              return "respond";
-            }
+            console.log(`Current user: ${user}`);
+            console.log(`Comments by user: ${hasResponded}`);
+            core.setOutput("result", "respond");
 
-      # Step 2: 回复新用户
+      # Step 2: 调试输出检测结果
+      - name: Debug Check Result
+        run: echo "Check Result: ${{ steps.check-user.outputs.result }}"
+
+      # Step 3: 回复用户
       - name: Respond to new user
         if: steps.check-user.outputs.result == 'respond'
         uses: peter-evans/create-or-update-comment@v3
@@ -43,4 +46,4 @@ jobs:
             欢迎来到本项目！😊
 
             请扫码加入我们的答疑群以获取更多帮助：
-           
+  
