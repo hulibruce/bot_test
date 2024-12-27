@@ -1,4 +1,4 @@
-name: New Comment Bot
+name: Comment Bot for new users
 
 on:
   issues:
@@ -45,7 +45,7 @@ jobs:
           USER="${{ github.event.comment.user.login || github.event.issue.user.login }}"
           if echo "${{ steps.get-users.outputs.result }}" | grep -q "$USER"; then
             echo "User $USER is not new."
-            echo "send_response=false" >> $GITHUB_ENV
+            echo "send_response=true" >> $GITHUB_ENV
           else
             echo "User $USER is new."
             echo "send_response=true" >> $GITHUB_ENV
