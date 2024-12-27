@@ -11,38 +11,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      # Step 1: 获取所有历史用户
+      - name: Get all historical users
+        id: get-users
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all'
+            });
 
-      - name: Check if user is in replied list
+            const users = new Set();
+            for (const issue of issues) {
+              users.add(issue.user.login); // 添加 Issue 作者
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number
+              });
+              for (const comment of comments.data) {
+                users.add(comment.user.login); // 添加评论用户
+              }
+            }
+
+            return Array.from(users);
+
+      # Step 2: 判断是否为新用户
+      - name: Check if user is new
         id: check-user
         run: |
-          FILE="replied_users.json"
           USER="${{ github.event.comment.user.login || github.event.issue.user.login }}"
-          if [ ! -f "$FILE" ]; then
-            echo "[]" > $FILE
-          fi
-          if grep -q "\"$USER\"" $FILE; then
-            echo "User $USER already in list."
+          if echo "${{ steps.get-users.outputs.result }}" | grep -q "$USER"; then
+            echo "User $USER is not new."
             echo "send_response=false" >> $GITHUB_ENV
           else
-            echo "User $USER not in list."
+            echo "User $USER is new."
             echo "send_response=true" >> $GITHUB_ENV
           fi
 
-      - name: Update replied_users.json
-        if: env.send_response == 'true'
-        run: |
-          USER="${{ github.event.comment.user.login || github.event.issue.user.login }}"
-          FILE="replied_users.json"
-          jq ". + [\"$USER\"]" $FILE > tmp.json && mv tmp.json $FILE
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add $FILE
-          git commit -m "Add $USER to replied list"
-          git push
-
-      - name: Respond to new issue or comment
+      # Step 3: 对新用户发送评论
+      - name: Respond to new user
         if: env.send_response == 'true'
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -52,3 +62,4 @@ jobs:
             欢迎来到本项目！😊
 
             请扫码加入我们的答疑群以获取更多帮助：
+            ![答疑群二维码](https://your-image-hosting.com/qr-code.png)
