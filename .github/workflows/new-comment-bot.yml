@@ -1,0 +1,54 @@
+name: New Comment Bot
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  respond:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check if user is in replied list
+        id: check-user
+        run: |
+          FILE="replied_users.json"
+          USER="${{ github.event.comment.user.login || github.event.issue.user.login }}"
+          if [ ! -f "$FILE" ]; then
+            echo "[]" > $FILE
+          fi
+          if grep -q "\"$USER\"" $FILE; then
+            echo "User $USER already in list."
+            echo "send_response=false" >> $GITHUB_ENV
+          else
+            echo "User $USER not in list."
+            echo "send_response=true" >> $GITHUB_ENV
+          fi
+
+      - name: Update replied_users.json
+        if: env.send_response == 'true'
+        run: |
+          USER="${{ github.event.comment.user.login || github.event.issue.user.login }}"
+          FILE="replied_users.json"
+          jq ". + [\"$USER\"]" $FILE > tmp.json && mv tmp.json $FILE
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $FILE
+          git commit -m "Add $USER to replied list"
+          git push
+
+      - name: Respond to new issue or comment
+        if: env.send_response == 'true'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            欢迎来到本项目！😊
+
+            请扫码加入我们的答疑群以获取更多帮助：
