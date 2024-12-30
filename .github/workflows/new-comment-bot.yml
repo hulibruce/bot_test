@@ -38,13 +38,16 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
-                body: `
-                  Thank you for your feedback! We have received your question and will deal with it later.
+                body: `Thank you for your feedback! We have received your question and will deal with it later.
+
 If any developer is interested in this issue, please leave a message "claim this issue" below the issue. Welcome to participate in open source co-construction!
-We are very grateful to every contributor. To communicate with official developers, you can download the Feishu app and scan the QR code to join the Feishu group！
+
+We are very grateful to every contributor. To communicate with official developers, you can download the Feishu app and scan the QR code to join the Feishu group!
+
 Thank you again for your support!
-                  ![QR Code](${qrCodeUrl})
-                `
+
+![QR Code](${qrCodeUrl})
+            `,  
               });
               console.log("Comment added for new user.");
             } else {
