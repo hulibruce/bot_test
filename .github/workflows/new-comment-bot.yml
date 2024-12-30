@@ -1,19 +1,20 @@
-name: auto comment on issue
+name: Greetings
+
 on:
   issues:
-    types: [opened, labeled]
+    types: [opened]
+
 jobs:
-  auto-comment:
+  greeting:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     steps:
-      - name: new feature
-        if: ${{ !contains('xile611', github.event.issue.user.login) }}
-        uses: actions-cool/issues-helper@v2
+      - name: Send Greetings
+        uses: actions/first-interaction@v1
         with:
-          actions: 'create-comment'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.issue.number }}
-          body: |
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: |
             Thank you for your feedback! We have received your question and will deal with it later.
             If any developer is interested in this issue, please leave a message "claim this issue" below the issue. Welcome to participate in open source co-construction!
             We are very grateful to every contributor. 
