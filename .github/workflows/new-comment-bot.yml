@@ -18,6 +18,7 @@ jobs:
           script: |
             const user = context.payload.issue?.user?.login || context.payload.comment?.user?.login;
             const issueNumber = context.payload.issue?.number;
+            const qrCodeUrl = 'https://github.com/hulibruce/bot_test/blob/main/QRCode.jpg';
 
             // 获取当前 Issue 的所有评论
             const comments = await github.rest.issues.listComments({
@@ -38,9 +39,11 @@ jobs:
                 repo: context.repo.repo,
                 issue_number: issueNumber,
                 body: `
-                  欢迎来到本项目！😊
-
-                  请扫码加入我们的答疑群以获取更多帮助：
+                  Thank you for your feedback! We have received your question and will deal with it later.
+If any developer is interested in this issue, please leave a message "claim this issue" below the issue. Welcome to participate in open source co-construction!
+We are very grateful to every contributor. To communicate with official developers, you can download the Feishu app and scan the QR code to join the Feishu group！
+Thank you again for your support!
+                  ![QR Code](${qrCodeUrl})
                 `
               });
               console.log("Comment added for new user.");
