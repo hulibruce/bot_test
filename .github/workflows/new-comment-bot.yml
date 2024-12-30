@@ -1,45 +1,26 @@
-name: Comment Bot for Issues
-
+name: auto comment on issue
 on:
   issues:
-    types: [opened]
-  issue_comment:
-    types: [created]
-
+    types: [opened, labeled]
 jobs:
-  respond:
+  auto-comment:
     runs-on: ubuntu-latest
-
     steps:
-      # 检查用户是否需要回复，并直接回复
-      - name: Check user and respond
-        uses: actions/github-script@v6
+      - name: new feature
+        if ${{ !contains('xile611', github.event.issue.user.login) }}
+        uses: actions-cool/issues-helper@v2
         with:
-          script: |
-            const user = context.payload.issue?.user?.login || context.payload.comment?.user?.login;
-            const issueNumber = context.payload.issue?.number;
-            const qrCodeUrl = 'https://github.com/hulibruce/bot_test/blob/main/QRCode.jpg';
-
-            // 获取当前 Issue 的所有评论
-            const comments = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-            });
-
-            // 检查是否已回复当前用户
-            const hasResponded = comments.data.some(comment => comment.user.login === user);
-            console.log(`Current user: ${user}`);
-            console.log(`Has responded: ${hasResponded}`);
-
-            if (true) {
-              // 如果尚未回复，则添加评论
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-               body: `Thank you for your feedback! We have received your question and will deal with it later.If any developer is interested in this issue, please leave a message "claim this issue" below the issue. Welcome to participate in open source co-construction!
-We are very grateful to every contributor. To communicate with official developers, you can download the Feishu app and scan the QR code to join the Feishu group!
-Thank you again for your support!![QR Code](${qrCodeUrl}) `,});
-              console.log("Comment added for new user.");} else {
-              console.log("User already responded, skipping comment.");}
+          actions: 'create-comment'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            Thank you for your feedback! We have received your question and will deal with it later.
+            If any developer is interested in this issue, please leave a message "claim this issue" below the issue. Welcome to participate in open source co-construction!
+            We are very grateful to every contributor. 
+            To communicate with official developers, you can download the Feishu app and scan the QR code to join the Feishu group！
+            Thank you again for your support!
+            ![feishu-qr-code](https://lf9-dp-fe-cms-tos.byteorg.com/obj/bit-cloud/feishu-qrcode.png)
+            感谢您的反馈！我们已经收到您的问题，并会在稍后处理。
+            如果有开发者对这个问题感兴趣，请在问题下方留言“认领此问题”。欢迎参与开源共建！
+            如需与官方开发者沟通，可以下载飞书应用并扫描二维码加入飞书群！
+            再次感谢您的支持！
